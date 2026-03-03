@@ -54,4 +54,18 @@ class OplogToSQLParserTests {
 
         assertEquals("test.student", namespace)
     }
+
+    @Test
+    fun `should generate insert sql from oplog json`() {
+        val parser = OplogToSQLParser()
+        val node = parser.read(inputJson())
+
+        val sql = parser.toSQL(node)
+
+        assertEquals(
+            "INSERT INTO test.student (_id, name, roll_no, is_graduated, date_of_birth) " +
+                    "VALUES ('635b79e231d82a8ab1de863b', 'Selena Miller', 51, false, '2000-01-30');",
+            sql
+        )
+    }
 }
