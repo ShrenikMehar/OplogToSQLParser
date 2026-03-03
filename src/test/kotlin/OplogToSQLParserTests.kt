@@ -1,17 +1,18 @@
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.assertEquals
+import kotlin.test.assertNotNull
 
 class OplogToSQLParserTests {
-    
-    @Test
-    fun `should return output JSON as is`() {
-        val inputJson = javaClass
+    private fun inputJson(): String {
+        return javaClass
             .getResource("/oplog-insert.json")!!
             .readText()
+    }
 
+    @Test
+    fun `should parse input json into JsonNode`() {
         val parser = OplogToSQLParser()
-        val outputJson = parser.read(inputJson)
-        
-        assertEquals(inputJson, outputJson)
+        val node = parser.read(inputJson())
+
+        assertNotNull(node)
     }
 }
