@@ -1,5 +1,6 @@
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 
 class OplogToSQLParserTests {
@@ -24,6 +25,23 @@ class OplogToSQLParserTests {
 
         val opType = parser.getOpType(node)
 
-        assertEquals("i", opType)
+        assertEquals(OpType.INSERT, opType)
+    }
+
+    @Test
+    fun `should throw exception when op type is not supported`() {
+        val parser = OplogToSQLParser()
+        val invalidJson = """
+            {
+              "op": "u",
+              "ns": "test.student",
+              "o": {}
+            }
+        """
+        val node = parser.read(invalidJson)
+
+        assertFailsWith<IllegalArgumentException> {
+            parser.getOpType(node)
+        }
     }
 }
