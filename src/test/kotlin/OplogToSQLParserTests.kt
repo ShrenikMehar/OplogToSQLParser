@@ -44,4 +44,14 @@ class OplogToSQLParserTests {
             parser.getOpType(node)
         }
     }
+
+    @Test
+    fun `should extract namespace from oplog json`() {
+        val parser = OplogToSQLParser()
+        val node = parser.read(inputJson())
+
+        val namespace = parser.getNamespace(node)
+
+        assertEquals("test.student", namespace)
+    }
 }

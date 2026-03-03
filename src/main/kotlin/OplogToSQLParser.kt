@@ -12,4 +12,6 @@ class OplogToSQLParser {
             "i" -> OpType.INSERT
             else -> throw IllegalArgumentException("Operation Type is not supported")
         }
+
+    fun getNamespace(node: JsonNode): String = node.get("ns").asText()
 }
