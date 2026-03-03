@@ -6,4 +6,6 @@ class OplogToSQLParser {
     private val objectMapper = jacksonObjectMapper()
 
     fun read(json: String): JsonNode = objectMapper.readTree(json)
+
+    fun getOpType(node: JsonNode): String = node.get("op").asText()
 }
