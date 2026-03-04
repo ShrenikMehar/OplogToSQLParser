@@ -18,6 +18,9 @@ class OplogToSQLParser {
     private fun getNamespace(jsonNode: JsonNode): String
         = jsonNode.get("ns").asText()
 
+    private fun getObjectNode(jsonNode: JsonNode): JsonNode
+            = jsonNode.get("o")
+
     fun toSQL(jsonString: String): String {
         val jsonNode = stringToJsonNode(jsonString)
 
@@ -29,7 +32,7 @@ class OplogToSQLParser {
 
     private fun toInsertSQL(jsonNode: JsonNode): String {
         val table = getNamespace(jsonNode)
-        val objectNode = jsonNode.get("o")
+        val objectNode = getObjectNode(jsonNode)
 
         val columns = objectNode.fieldNames().asSequence().toList()
         val values = columns.map { field ->
@@ -42,7 +45,7 @@ class OplogToSQLParser {
 
     private fun toUpdateSQL(jsonNode: JsonNode): String {
         val table = getNamespace(jsonNode)
-        val diff = jsonNode.get("o").get("diff")
+        val diff = getObjectNode(jsonNode).get("diff")
 
         val (column, value) =
             diff.get("u")?.let { updates ->
