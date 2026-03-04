@@ -19,7 +19,7 @@ class OplogToSQLParser {
     fun toSQL(node: JsonNode): String =
         when (getOpType(node)) {
             OpType.INSERT -> toInsertSQL(node)
-            OpType.UPDATE -> TODO()
+            OpType.UPDATE -> toUpdateSQL(node)
         }
 
     private fun toInsertSQL(node: JsonNode): String {
@@ -33,6 +33,18 @@ class OplogToSQLParser {
 
         return "INSERT INTO $table (${columns.joinToString()}) " +
                 "VALUES (${values.joinToString()});"
+    }
+
+    private fun toUpdateSQL(node: JsonNode): String {
+        val table = getNamespace(node)
+
+        val updates = node.get("o").get("diff").get("u")
+        val column = updates.fieldNames().next()
+        val value = formatValue(updates.get(column))
+
+        val id = node.get("o2").get("_id").asText()
+
+        return "UPDATE $table SET $column = $value WHERE _id = '$id';"
     }
 
     private fun formatValue(value: JsonNode): String =

@@ -9,6 +9,11 @@ class OplogToSQLParserTests {
             .getResource("/oplog-insert.json")!!
             .readText()
     }
+    private fun updateJsonForNewValue(): String {
+        return javaClass
+            .getResource("/oplog-update-new-value.json")!!
+            .readText()
+    }
 
     @Test
     fun `should parse input json into JsonNode`() {
@@ -65,6 +70,19 @@ class OplogToSQLParserTests {
         assertEquals(
             "INSERT INTO test.student (_id, name, roll_no, is_graduated, date_of_birth) " +
                     "VALUES ('635b79e231d82a8ab1de863b', 'Selena Miller', 51, false, '2000-01-30');",
+            sql
+        )
+    }
+
+    @Test
+    fun `should generate update sql when setting a field`() {
+        val parser = OplogToSQLParser()
+        val node = parser.read(updateJsonForNewValue())
+
+        val sql = parser.toSQL(node)
+
+        assertEquals(
+            "UPDATE test.student SET is_graduated = true WHERE _id = '635b79e231d82a8ab1de863b';",
             sql
         )
     }
