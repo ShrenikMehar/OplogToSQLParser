@@ -8,27 +8,28 @@ class OplogToSQLParser {
     private fun stringToJsonNode(jsonString: String): JsonNode
         = objectMapper.readTree(jsonString)
 
-    private fun getOpType(jsonString: String): OpType =
-        when (stringToJsonNode(jsonString).get("op")?.asText()) {
+    private fun getOpType(jsonNode: JsonNode): OpType =
+        when (jsonNode.get("op")?.asText()) {
             "i" -> OpType.INSERT
             "u" -> OpType.UPDATE
             else -> throw IllegalArgumentException("Operation Type is not supported")
         }
 
-    private fun getNamespace(jsonString: String): String
-        = stringToJsonNode(jsonString).get("ns").asText()
+    private fun getNamespace(jsonNode: JsonNode): String
+        = jsonNode.get("ns").asText()
 
     fun toSQL(jsonString: String): String {
-        return when (getOpType(jsonString)) {
-            OpType.INSERT -> toInsertSQL(jsonString)
-            OpType.UPDATE -> toUpdateSQL(jsonString)
+        val jsonNode = stringToJsonNode(jsonString)
+
+        return when (getOpType(jsonNode)) {
+            OpType.INSERT -> toInsertSQL(jsonNode)
+            OpType.UPDATE -> toUpdateSQL(jsonNode)
         }
     }
 
-    private fun toInsertSQL(jsonString: String): String {
-        val table = getNamespace(jsonString)
-        val node = stringToJsonNode(jsonString)
-        val objectNode = node.get("o")
+    private fun toInsertSQL(jsonNode: JsonNode): String {
+        val table = getNamespace(jsonNode)
+        val objectNode = jsonNode.get("o")
 
         val columns = objectNode.fieldNames().asSequence().toList()
         val values = columns.map { field ->
@@ -39,10 +40,9 @@ class OplogToSQLParser {
                 "VALUES (${values.joinToString()});"
     }
 
-    private fun toUpdateSQL(jsonString: String): String {
-        val table = getNamespace(jsonString)
-        val node = stringToJsonNode(jsonString)
-        val diff = node.get("o").get("diff")
+    private fun toUpdateSQL(jsonNode: JsonNode): String {
+        val table = getNamespace(jsonNode)
+        val diff = jsonNode.get("o").get("diff")
 
         val (column, value) =
             diff.get("u")?.let { updates ->
@@ -55,7 +55,7 @@ class OplogToSQLParser {
                 }
                 ?: throw IllegalArgumentException("Unsupported update operation")
 
-        val id = node.get("o2").get("_id").asText()
+        val id = jsonNode.get("o2").get("_id").asText()
 
         return "UPDATE $table SET $column = $value WHERE _id = '$id';"
     }
