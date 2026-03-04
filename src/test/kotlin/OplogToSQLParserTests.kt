@@ -1,7 +1,6 @@
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
 
 class OplogToSQLParserTests {
     private fun inputJson(): String {
@@ -12,7 +11,7 @@ class OplogToSQLParserTests {
 
     private fun updateJsonForNewValue(): String {
         return javaClass
-            .getResource("/oplog-update-new-value.json")!!
+            .getResource("/oplog-update-set.json")!!
             .readText()
     }
 
@@ -67,7 +66,7 @@ class OplogToSQLParserTests {
                 "op": "u",
                 "ns": "test.student",
                 "o": {
-                    "$$v": 2,
+                    "$v": 2,
                     "diff": {}
                 },
                 "o2": {
