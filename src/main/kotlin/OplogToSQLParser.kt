@@ -37,10 +37,18 @@ class OplogToSQLParser {
 
     private fun toUpdateSQL(node: JsonNode): String {
         val table = getNamespace(node)
+        val diff = node.get("o").get("diff")
 
-        val updates = node.get("o").get("diff").get("u")
-        val column = updates.fieldNames().next()
-        val value = formatValue(updates.get(column))
+        val (column, value) =
+            diff.get("u")?.let { updates ->
+                val col = updates.fieldNames().next()
+                col to formatValue(updates.get(col))
+            }
+                ?: diff.get("d")?.let { deletes ->
+                    val col = deletes.fieldNames().next()
+                    col to "NULL"
+                }
+                ?: throw IllegalArgumentException("Unsupported update operation")
 
         val id = node.get("o2").get("_id").asText()
 
