@@ -5,8 +5,8 @@ class OplogToSQLParser {
 
     private val objectMapper = jacksonObjectMapper()
 
-    private fun stringToJsonNode(jsonString: String): JsonNode
-        = objectMapper.readTree(jsonString)
+    private fun stringToJsonNode(jsonString: String): JsonNode =
+        objectMapper.readTree(jsonString)
 
     private fun getOpType(jsonNode: JsonNode): OpType =
         when (jsonNode.get("op")?.asText()) {
@@ -15,11 +15,14 @@ class OplogToSQLParser {
             else -> throw IllegalArgumentException("Operation Type is not supported")
         }
 
-    private fun getNamespace(jsonNode: JsonNode): String
-        = jsonNode.get("ns").asText()
+    private fun getNamespace(jsonNode: JsonNode): String =
+        jsonNode.get("ns").asText()
 
-    private fun getObjectNode(jsonNode: JsonNode): JsonNode
-            = jsonNode.get("o")
+    private fun getObjectNode(jsonNode: JsonNode): JsonNode =
+        jsonNode.get("o")
+
+    private fun getId(jsonNode: JsonNode): String =
+        jsonNode.get("o2").get("_id").asText()
 
     fun toSQL(jsonString: String): String {
         val jsonNode = stringToJsonNode(jsonString)
@@ -35,32 +38,34 @@ class OplogToSQLParser {
         val objectNode = getObjectNode(jsonNode)
 
         val columns = objectNode.fieldNames().asSequence().toList()
-        val values = columns.map { field ->
-            formatValue(objectNode.get(field))
-        }
+        val values = columns.map { formatValue(objectNode.get(it)) }
 
-        return "INSERT INTO $table (${columns.joinToString()}) " +
-                "VALUES (${values.joinToString()});"
+        return "INSERT INTO $table (${columns.joinToString()}) VALUES (${values.joinToString()});"
     }
 
     private fun toUpdateSQL(jsonNode: JsonNode): String {
         val table = getNamespace(jsonNode)
+        val setClause = buildSetClause(jsonNode)
+        val id = getId(jsonNode)
+
+        return "UPDATE $table SET $setClause WHERE _id = '$id';"
+    }
+
+    private fun buildSetClause(jsonNode: JsonNode): String {
         val diff = getObjectNode(jsonNode).get("diff")
 
-        val (column, value) =
-            diff.get("u")?.let { updates ->
-                val col = updates.fieldNames().next()
-                col to formatValue(updates.get(col))
-            }
-                ?: diff.get("d")?.let { deletes ->
-                    val col = deletes.fieldNames().next()
-                    col to "NULL"
-                }
-                ?: throw IllegalArgumentException("Unsupported update operation")
+        diff.get("u")?.let { updates ->
+            val column = updates.fieldNames().next()
+            val value = formatValue(updates.get(column))
+            return "$column = $value"
+        }
 
-        val id = jsonNode.get("o2").get("_id").asText()
+        diff.get("d")?.let { deletes ->
+            val column = deletes.fieldNames().next()
+            return "$column = NULL"
+        }
 
-        return "UPDATE $table SET $column = $value WHERE _id = '$id';"
+        throw IllegalArgumentException("Unsupported update operation")
     }
 
     private fun formatValue(value: JsonNode): String =
