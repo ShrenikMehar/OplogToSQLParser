@@ -35,7 +35,7 @@ class OplogToSQLParserTests {
         val parser = OplogToSQLParser()
         val node = parser.read(inputJson())
 
-        val opType = parser.getOpType(node)
+        val opType = parser.getOpType(inputJson())
 
         assertEquals(OpType.INSERT, opType)
     }
@@ -53,7 +53,7 @@ class OplogToSQLParserTests {
         val node = parser.read(invalidJson)
 
         assertFailsWith<IllegalArgumentException> {
-            parser.getOpType(node)
+            parser.getOpType(invalidJson)
         }
     }
 
@@ -62,7 +62,7 @@ class OplogToSQLParserTests {
         val parser = OplogToSQLParser()
         val node = parser.read(inputJson())
 
-        val namespace = parser.getNamespace(node)
+        val namespace = parser.getNamespace(inputJson())
 
         assertEquals("test.student", namespace)
     }
@@ -72,7 +72,7 @@ class OplogToSQLParserTests {
         val parser = OplogToSQLParser()
         val node = parser.read(inputJson())
 
-        val sql = parser.toSQL(node)
+        val sql = parser.toSQL(inputJson())
 
         assertEquals(
             "INSERT INTO test.student (_id, name, roll_no, is_graduated, date_of_birth) " +
@@ -86,7 +86,7 @@ class OplogToSQLParserTests {
         val parser = OplogToSQLParser()
         val node = parser.read(updateJsonForNewValue())
 
-        val sql = parser.toSQL(node)
+        val sql = parser.toSQL(updateJsonForNewValue())
 
         assertEquals(
             "UPDATE test.student SET is_graduated = true WHERE _id = '635b79e231d82a8ab1de863b';",
@@ -99,7 +99,7 @@ class OplogToSQLParserTests {
         val parser = OplogToSQLParser()
         val node = parser.read(updateJsonForUnsetting())
 
-        val sql = parser.toSQL(node)
+        val sql = parser.toSQL(updateJsonForUnsetting())
 
         assertEquals(
             "UPDATE test.student SET roll_no = NULL WHERE _id = '635b79e231d82a8ab1de863b';",
@@ -126,7 +126,7 @@ class OplogToSQLParserTests {
         val node = parser.read(invalidJson)
 
         assertFailsWith<IllegalArgumentException> {
-            parser.toSQL(node)
+            parser.toSQL(invalidJson)
         }
     }
 }
