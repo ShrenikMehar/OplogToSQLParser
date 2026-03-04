@@ -5,25 +5,6 @@ class OplogToSQLParser {
 
     private val objectMapper = jacksonObjectMapper()
 
-    private fun stringToJsonNode(jsonString: String): JsonNode =
-        objectMapper.readTree(jsonString)
-
-    private fun getOpType(jsonNode: JsonNode): OpType =
-        when (jsonNode.get("op")?.asText()) {
-            "i" -> OpType.INSERT
-            "u" -> OpType.UPDATE
-            else -> throw IllegalArgumentException("Operation Type is not supported")
-        }
-
-    private fun getNamespace(jsonNode: JsonNode): String =
-        jsonNode.get("ns").asText()
-
-    private fun getObjectNode(jsonNode: JsonNode): JsonNode =
-        jsonNode.get("o")
-
-    private fun getId(jsonNode: JsonNode): String =
-        jsonNode.get("o2").get("_id").asText()
-
     fun toSQL(jsonString: String): String {
         val jsonNode = stringToJsonNode(jsonString)
 
@@ -75,4 +56,23 @@ class OplogToSQLParser {
             value.isNumber  -> value.numberValue().toString()
             else -> value.toString()
         }
+
+    private fun getOpType(jsonNode: JsonNode): OpType =
+        when (jsonNode.get("op")?.asText()) {
+            "i" -> OpType.INSERT
+            "u" -> OpType.UPDATE
+            else -> throw IllegalArgumentException("Operation Type is not supported")
+        }
+
+    private fun getNamespace(jsonNode: JsonNode): String =
+        jsonNode.get("ns").asText()
+
+    private fun getObjectNode(jsonNode: JsonNode): JsonNode =
+        jsonNode.get("o")
+
+    private fun getId(jsonNode: JsonNode): String =
+        jsonNode.get("o2").get("_id").asText()
+
+    private fun stringToJsonNode(jsonString: String): JsonNode =
+        objectMapper.readTree(jsonString)
 }
