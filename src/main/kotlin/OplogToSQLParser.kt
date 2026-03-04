@@ -10,6 +10,7 @@ class OplogToSQLParser {
     fun getOpType(node: JsonNode): OpType =
         when (node.get("op")?.asText()) {
             "i" -> OpType.INSERT
+            "u" -> OpType.UPDATE
             else -> throw IllegalArgumentException("Operation Type is not supported")
         }
 
@@ -18,6 +19,7 @@ class OplogToSQLParser {
     fun toSQL(node: JsonNode): String =
         when (getOpType(node)) {
             OpType.INSERT -> toInsertSQL(node)
+            OpType.UPDATE -> TODO()
         }
 
     private fun toInsertSQL(node: JsonNode): String {

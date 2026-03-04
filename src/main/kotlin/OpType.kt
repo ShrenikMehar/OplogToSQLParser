@@ -1,3 +1,4 @@
 enum class OpType {
-    INSERT
+    INSERT,
+    UPDATE
 }
