@@ -23,40 +23,6 @@ class OplogToSQLParserTests {
     }
 
     @Test
-    fun `should extract op type from oplog json`() {
-        val parser = OplogToSQLParser()
-
-        val opType = parser.getOpType(inputJson())
-
-        assertEquals(OpType.INSERT, opType)
-    }
-
-    @Test
-    fun `should throw exception when op type is not supported`() {
-        val parser = OplogToSQLParser()
-        val invalidJson = """
-            {
-              "op": "x",
-              "ns": "test.student",
-              "o": {}
-            }
-        """
-
-        assertFailsWith<IllegalArgumentException> {
-            parser.getOpType(invalidJson)
-        }
-    }
-
-    @Test
-    fun `should extract namespace from oplog json`() {
-        val parser = OplogToSQLParser()
-
-        val namespace = parser.getNamespace(inputJson())
-
-        assertEquals("test.student", namespace)
-    }
-
-    @Test
     fun `should generate insert sql from oplog json`() {
         val parser = OplogToSQLParser()
 

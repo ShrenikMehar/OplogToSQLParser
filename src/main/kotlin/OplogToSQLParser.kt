@@ -5,16 +5,18 @@ class OplogToSQLParser {
 
     private val objectMapper = jacksonObjectMapper()
 
-    private fun stringToJsonNode(jsonString: String): JsonNode = objectMapper.readTree(jsonString)
+    private fun stringToJsonNode(jsonString: String): JsonNode
+        = objectMapper.readTree(jsonString)
 
-    fun getOpType(jsonString: String): OpType =
+    private fun getOpType(jsonString: String): OpType =
         when (stringToJsonNode(jsonString).get("op")?.asText()) {
             "i" -> OpType.INSERT
             "u" -> OpType.UPDATE
             else -> throw IllegalArgumentException("Operation Type is not supported")
         }
 
-    fun getNamespace(jsonString: String): String = stringToJsonNode(jsonString).get("ns").asText()
+    private fun getNamespace(jsonString: String): String
+        = stringToJsonNode(jsonString).get("ns").asText()
 
     fun toSQL(jsonString: String): String {
         return when (getOpType(jsonString)) {
