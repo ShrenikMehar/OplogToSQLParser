@@ -45,7 +45,7 @@ class OplogToSQLParserTests {
         val parser = OplogToSQLParser()
         val invalidJson = """
             {
-              "op": "u",
+              "op": "x",
               "ns": "test.student",
               "o": {}
             }
@@ -110,7 +110,6 @@ class OplogToSQLParserTests {
     @Test
     fun `should throw exception when update operation is unsupported`() {
         val parser = OplogToSQLParser()
-
         val invalidJson = $$$"""
             {
                 "op": "u",
