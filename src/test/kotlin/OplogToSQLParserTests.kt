@@ -21,6 +21,12 @@ class OplogToSQLParserTests {
             .readText()
     }
 
+    private fun deleteJson(): String {
+        return javaClass
+            .getResource("/oplog-delete.json")!!
+            .readText()
+    }
+
     @Test
     fun `should generate insert sql from oplog json`() {
         val parser = OplogToSQLParser()

@@ -11,6 +11,7 @@ class OplogToSQLParser {
         return when (getOpType(jsonNode)) {
             OpType.INSERT -> toInsertSQL(jsonNode)
             OpType.UPDATE -> toUpdateSQL(jsonNode)
+            OpType.DELETE -> TODO()
         }
     }
 
