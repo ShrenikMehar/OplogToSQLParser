@@ -85,4 +85,16 @@ class OplogToSQLParserTests {
             parser.toSQL(invalidJson)
         }
     }
+
+    @Test
+    fun `should generate update sql when deleting an entry`() {
+        val parser = OplogToSQLParser()
+
+        val sql = parser.toSQL(deleteJson())
+
+        assertEquals(
+            "DELETE FROM test.student WHERE _id = '635b79e231d82a8ab1de863b';",
+            sql
+        )
+    }
 }

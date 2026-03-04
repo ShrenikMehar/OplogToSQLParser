@@ -11,7 +11,7 @@ class OplogToSQLParser {
         return when (getOpType(jsonNode)) {
             OpType.INSERT -> toInsertSQL(jsonNode)
             OpType.UPDATE -> toUpdateSQL(jsonNode)
-            OpType.DELETE -> TODO()
+            OpType.DELETE -> toDeleteSQL(jsonNode)
         }
     }
 
@@ -31,6 +31,13 @@ class OplogToSQLParser {
         val id = getId(jsonNode)
 
         return "UPDATE $table SET $setClause WHERE _id = '$id';"
+    }
+
+    private fun toDeleteSQL(jsonNode: JsonNode): String {
+        val table = getNamespace(jsonNode)
+        val id = getObjectNode(jsonNode).get("_id").asText()
+
+        return "DELETE FROM $table WHERE _id = '$id';"
     }
 
     private fun buildSetClause(jsonNode: JsonNode): String {
@@ -62,6 +69,7 @@ class OplogToSQLParser {
         when (jsonNode.get("op")?.asText()) {
             "i" -> OpType.INSERT
             "u" -> OpType.UPDATE
+            "d" -> OpType.DELETE
             else -> throw IllegalArgumentException("Operation Type is not supported")
         }
 
