@@ -1,0 +1,4 @@
+services:
+  oplog-parser:
+    build: .
+    container_name: oplog-parser
