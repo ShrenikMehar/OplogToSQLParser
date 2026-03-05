@@ -39,15 +39,7 @@ class InsertSQLBuilder(
     }
 
     private fun buildColumnDefinition(column: String, value: JsonNode): String {
-        val type = inferSqlType(value)
+        val type = sqlUtils.inferSqlType(value)
         return if (column == "_id") "$column $type PRIMARY KEY" else "$column $type"
     }
-
-    private fun inferSqlType(value: JsonNode): String =
-        when {
-            value.isTextual -> "VARCHAR(255)"
-            value.isBoolean -> "BOOLEAN"
-            value.isNumber -> "FLOAT"
-            else -> "VARCHAR(255)"
-        }
 }

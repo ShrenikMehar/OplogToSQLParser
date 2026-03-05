@@ -41,4 +41,31 @@ class SqlUtilsTests {
 
         assertEquals("{}", result)
     }
+
+    @Test
+    fun `should infer varchar type for text`() {
+        val node = parser.parse("\"hello\"")
+
+        val type = sqlUtils.inferSqlType(node)
+
+        assertEquals("VARCHAR(255)", type)
+    }
+
+    @Test
+    fun `should infer boolean type`() {
+        val node = parser.parse("true")
+
+        val type = sqlUtils.inferSqlType(node)
+
+        assertEquals("BOOLEAN", type)
+    }
+
+    @Test
+    fun `should infer float type for number`() {
+        val node = parser.parse("51")
+
+        val type = sqlUtils.inferSqlType(node)
+
+        assertEquals("FLOAT", type)
+    }
 }

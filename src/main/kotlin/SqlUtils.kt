@@ -9,4 +9,12 @@ class SqlUtils {
             value.isNumber -> value.numberValue().toString()
             else -> value.toString()
         }
+
+    fun inferSqlType(value: JsonNode): String =
+        when {
+            value.isTextual -> "VARCHAR(255)"
+            value.isBoolean -> "BOOLEAN"
+            value.isNumber -> "FLOAT"
+            else -> "VARCHAR(255)"
+        }
 }
