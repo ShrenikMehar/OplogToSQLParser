@@ -108,4 +108,17 @@ class OplogToSQLParserTests {
 
         assertTrue(sql.contains("CREATE SCHEMA test;"))
     }
+
+    @Test
+    fun `should infer correct sql column types`() {
+        val parser = OplogToSQLParser()
+        val json = inputJson()
+
+        val sql = parser.toSQL(json)
+
+        assertTrue(sql.contains("_id VARCHAR(255) PRIMARY KEY"))
+        assertTrue(sql.contains("name VARCHAR(255)"))
+        assertTrue(sql.contains("roll_no FLOAT"))
+        assertTrue(sql.contains("is_graduated BOOLEAN"))
+    }
 }

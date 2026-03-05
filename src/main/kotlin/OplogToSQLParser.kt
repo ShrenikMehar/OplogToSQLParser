@@ -17,10 +17,10 @@ class OplogToSQLParser {
 
     private fun toInsertStatements(node: JsonNode): String {
         val schemaSql = buildCreateSchema(node)
+        val tableSql = buildCreateTable(node)
         val insertSql = toInsertSQL(node)
 
-        return listOf(schemaSql, insertSql)
-            .joinToString("\n\n")
+        return listOf(schemaSql, tableSql, insertSql).joinToString("\n\n")
     }
 
     private fun toInsertSQL(jsonNode: JsonNode): String {
@@ -53,6 +53,22 @@ class OplogToSQLParser {
         return "CREATE SCHEMA $schema;"
     }
 
+    private fun buildCreateTable(node: JsonNode): String {
+        val namespace = getNamespace(node)
+        val objectNode = getObjectNode(node)
+
+        val columns = objectNode.fieldNames().asSequence().joinToString(", ") {
+            buildColumnDefinition(it, objectNode.get(it))
+        }
+
+        return "CREATE TABLE $namespace ($columns);"
+    }
+
+    private fun buildColumnDefinition(column: String, value: JsonNode): String {
+        val type = inferSqlType(value)
+        return if (column == "_id") "$column $type PRIMARY KEY" else "$column $type"
+    }
+
     private fun buildSetClause(jsonNode: JsonNode): String {
         val diff = getObjectNode(jsonNode).get("diff")
 
@@ -78,6 +94,13 @@ class OplogToSQLParser {
             else -> value.toString()
         }
 
+    private fun inferSqlType(value: JsonNode): String = when {
+        value.isTextual -> "VARCHAR(255)"
+        value.isBoolean -> "BOOLEAN"
+        value.isNumber -> "FLOAT"
+        else -> "VARCHAR(255)"
+    }
+
     private fun getOpType(jsonNode: JsonNode): OpType =
         when (jsonNode.get("op")?.asText()) {
             "i" -> OpType.INSERT
@@ -91,6 +114,9 @@ class OplogToSQLParser {
 
     private fun getSchema(node: JsonNode): String =
         getNamespace(node).split(".")[0]
+
+    private fun getTable(node: JsonNode): String =
+        getNamespace(node).split(".")[1]
 
     private fun getObjectNode(jsonNode: JsonNode): JsonNode =
         jsonNode.get("o")
