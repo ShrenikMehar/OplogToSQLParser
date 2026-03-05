@@ -121,4 +121,21 @@ class OplogToSQLParserTests {
         assertTrue(sql.contains("roll_no FLOAT"))
         assertTrue(sql.contains("is_graduated BOOLEAN"))
     }
+
+    @Test
+    fun `should generate create schema, create table and insert statements`() {
+        val parser = OplogToSQLParser()
+
+        val sql = parser.toSQL(inputJson())
+
+        val expected = """
+        CREATE SCHEMA test;
+
+        CREATE TABLE test.student (_id VARCHAR(255) PRIMARY KEY, name VARCHAR(255), roll_no FLOAT, is_graduated BOOLEAN, date_of_birth VARCHAR(255));
+
+        INSERT INTO test.student (_id, name, roll_no, is_graduated, date_of_birth) VALUES ('635b79e231d82a8ab1de863b', 'Selena Miller', 51, false, '2000-01-30');
+    """.trimIndent()
+
+        assertEquals(expected, sql)
+    }
 }
