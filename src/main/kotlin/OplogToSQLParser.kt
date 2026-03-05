@@ -1,12 +1,11 @@
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 
 class OplogToSQLParser {
 
-    private val objectMapper = jacksonObjectMapper()
+    private val jsonParser = OplogJsonParser()
 
     fun toSQL(jsonString: String): String {
-        val jsonNode = stringToJsonNode(jsonString)
+        val jsonNode = jsonParser.parse(jsonString)
 
         return when (getOpType(jsonNode)) {
             OpType.INSERT -> toInsertStatements(jsonNode)
@@ -127,7 +126,4 @@ class OplogToSQLParser {
 
     private fun getId(jsonNode: JsonNode): String =
         jsonNode.get("o2").get("_id").asText()
-
-    private fun stringToJsonNode(jsonString: String): JsonNode =
-        objectMapper.readTree(jsonString)
 }
