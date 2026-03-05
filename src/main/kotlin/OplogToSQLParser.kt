@@ -27,7 +27,7 @@ class OplogToSQLParser {
         val table = getNamespace(jsonNode)
         val objectNode = getObjectNode(jsonNode)
 
-        val columns = objectNode.fieldNames().asSequence().toList()
+        val columns = getColumns(objectNode)
         val values = columns.map { formatValue(objectNode.get(it)) }
 
         return "INSERT INTO $table (${columns.joinToString()}) VALUES (${values.joinToString()});"
@@ -57,7 +57,7 @@ class OplogToSQLParser {
         val namespace = getNamespace(node)
         val objectNode = getObjectNode(node)
 
-        val columns = objectNode.fieldNames().asSequence().joinToString(", ") {
+        val columns = getColumns(objectNode).joinToString(", ") {
             buildColumnDefinition(it, objectNode.get(it))
         }
 
@@ -70,7 +70,8 @@ class OplogToSQLParser {
     }
 
     private fun buildSetClause(jsonNode: JsonNode): String {
-        val diff = getObjectNode(jsonNode).get("diff")
+        val objectNode = getObjectNode(jsonNode)
+        val diff = objectNode.get("diff")
 
         diff.get("u")?.let { updates ->
             val column = updates.fieldNames().next()
@@ -85,6 +86,9 @@ class OplogToSQLParser {
 
         throw IllegalArgumentException("Unsupported update operation")
     }
+
+    private fun getColumns(objectNode: JsonNode): List<String> =
+        objectNode.fieldNames().asSequence().toList()
 
     private fun formatValue(value: JsonNode): String =
         when {
@@ -113,10 +117,10 @@ class OplogToSQLParser {
         jsonNode.get("ns").asText()
 
     private fun getSchema(node: JsonNode): String =
-        getNamespace(node).split(".")[0]
+        getNamespace(node).substringBefore(".")
 
     private fun getTable(node: JsonNode): String =
-        getNamespace(node).split(".")[1]
+        getNamespace(node).substringAfter(".")
 
     private fun getObjectNode(jsonNode: JsonNode): JsonNode =
         jsonNode.get("o")
