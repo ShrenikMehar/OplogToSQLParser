@@ -1,4 +1,7 @@
+package json
+
 import com.fasterxml.jackson.databind.JsonNode
+import model.OpType
 
 class OplogJsonAccessor {
 

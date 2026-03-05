@@ -1,3 +1,7 @@
+package sql
+
+import json.OplogJsonAccessor
+import json.OplogJsonParser
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

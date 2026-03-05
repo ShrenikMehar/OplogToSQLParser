@@ -1,3 +1,5 @@
+package sql
+
 import com.fasterxml.jackson.databind.JsonNode
 
 class SqlUtils {

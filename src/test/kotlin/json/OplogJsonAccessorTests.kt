@@ -1,3 +1,6 @@
+package json
+
+import model.OpType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

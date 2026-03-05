@@ -1,4 +1,7 @@
+package sql
+
 import com.fasterxml.jackson.databind.JsonNode
+import json.OplogJsonAccessor
 
 class InsertSQLBuilder(
     private val accessor: OplogJsonAccessor,
