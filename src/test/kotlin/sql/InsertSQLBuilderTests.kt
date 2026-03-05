@@ -12,6 +12,7 @@ class InsertSQLBuilderTests {
     private val sqlUtils = SqlUtils()
 
     private val builder = InsertSQLBuilder(accessor, sqlUtils)
+    private val node = parser.parse(inputJson())
 
     private fun inputJson(): String {
         return javaClass
@@ -21,8 +22,6 @@ class InsertSQLBuilderTests {
 
     @Test
     fun `should generate only insert statement`() {
-        val node = parser.parse(inputJson())
-
         val sql = builder.buildInsert(node)
 
         val expected =
@@ -33,8 +32,6 @@ class InsertSQLBuilderTests {
 
     @Test
     fun `should generate create schema create table and insert sql`() {
-        val node = parser.parse(inputJson())
-
         val sql = builder.build(node)
 
         val expected = """

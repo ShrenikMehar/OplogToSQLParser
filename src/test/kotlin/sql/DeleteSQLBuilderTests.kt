@@ -11,6 +11,8 @@ class DeleteSQLBuilderTests {
     private val accessor = OplogJsonAccessor()
 
     private val builder = DeleteSQLBuilder(accessor)
+    private val node = parser.parse(deleteJson())
+    private val sql = builder.build(node)
 
     private fun deleteJson(): String {
         return javaClass
@@ -20,10 +22,6 @@ class DeleteSQLBuilderTests {
 
     @Test
     fun `should generate delete sql`() {
-        val node = parser.parse(deleteJson())
-
-        val sql = builder.build(node)
-
         assertEquals(
             "DELETE FROM test.student WHERE _id = '635b79e231d82a8ab1de863b';",
             sql

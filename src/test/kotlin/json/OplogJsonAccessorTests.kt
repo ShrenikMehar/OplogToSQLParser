@@ -27,24 +27,28 @@ class OplogJsonAccessorTests {
     @Test
     fun `should extract operation type`() {
         val opType = accessor.getOpType(node)
+
         assertEquals(OpType.INSERT, opType)
     }
 
     @Test
     fun `should extract namespace`() {
         val namespace = accessor.getNamespace(node)
+
         assertEquals("test.student", namespace)
     }
 
     @Test
     fun `should extract schema`() {
         val schema = accessor.getSchema(node)
+
         assertEquals("test", schema)
     }
 
     @Test
     fun `should extract table`() {
         val table = accessor.getTable(node)
+
         assertEquals("student", table)
     }
 
@@ -59,12 +63,14 @@ class OplogJsonAccessorTests {
     @Test
     fun `should extract object node`() {
         val objectNode = accessor.getObjectNode(node)
+
         assertEquals("Selena", objectNode.get("name").asText())
     }
 
     @Test
     fun `should extract id`() {
         val id = accessor.getId(node)
+
         assertEquals("123", id)
     }
 }

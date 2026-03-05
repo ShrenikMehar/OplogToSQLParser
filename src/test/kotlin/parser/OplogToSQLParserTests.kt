@@ -36,10 +36,10 @@ class OplogToSQLParserTests {
             .readText()
     }
 
+    val parser = OplogToSQLParser()
+
     @Test
     fun `should generate insert sql from oplog json`() {
-        val parser = OplogToSQLParser()
-
         val sql = parser.toSQL(inputJson())
 
         assertTrue(
@@ -52,8 +52,6 @@ class OplogToSQLParserTests {
 
     @Test
     fun `should generate update sql when setting a field`() {
-        val parser = OplogToSQLParser()
-
         val sql = parser.toSQL(updateJsonForNewValue())
 
         assertEquals(
@@ -64,8 +62,6 @@ class OplogToSQLParserTests {
 
     @Test
     fun `should generate update sql when unsetting a field`() {
-        val parser = OplogToSQLParser()
-
         val sql = parser.toSQL(updateJsonForUnsetting())
 
         assertEquals(
@@ -76,7 +72,6 @@ class OplogToSQLParserTests {
 
     @Test
     fun `should throw exception when update operation is unsupported`() {
-        val parser = OplogToSQLParser()
         val invalidJson = $$$"""
             {
                 "op": "u",
@@ -98,8 +93,6 @@ class OplogToSQLParserTests {
 
     @Test
     fun `should generate update sql when deleting an entry`() {
-        val parser = OplogToSQLParser()
-
         val sql = parser.toSQL(deleteJson())
 
         assertEquals(
@@ -110,8 +103,6 @@ class OplogToSQLParserTests {
 
     @Test
     fun `should generate create schema statement`() {
-        val parser = OplogToSQLParser()
-
         val sql = parser.toSQL(inputJson())
 
         assertTrue(sql.contains("CREATE SCHEMA test;"))
@@ -119,10 +110,7 @@ class OplogToSQLParserTests {
 
     @Test
     fun `should infer correct sql column types`() {
-        val parser = OplogToSQLParser()
-        val json = inputJson()
-
-        val sql = parser.toSQL(json)
+        val sql = parser.toSQL(inputJson())
 
         assertTrue(sql.contains("_id VARCHAR(255) PRIMARY KEY"))
         assertTrue(sql.contains("name VARCHAR(255)"))
@@ -132,8 +120,6 @@ class OplogToSQLParserTests {
 
     @Test
     fun `should generate create schema, create table and insert statements`() {
-        val parser = OplogToSQLParser()
-
         val sql = parser.toSQL(inputJson())
 
         val expected = """
@@ -149,8 +135,6 @@ class OplogToSQLParserTests {
 
     @Test
     fun `should handle multiple input oplog entries`() {
-        val parser = OplogToSQLParser()
-
         val sql = parser.toSQL(inputMultipleJson())
 
         assertTrue(sql.isNotBlank())
@@ -158,8 +142,6 @@ class OplogToSQLParserTests {
 
     @Test
     fun `should create schema and table only once for same collection`() {
-        val parser = OplogToSQLParser()
-
         val sql = parser.toSQL(inputMultipleJson())
 
         val schemaCount = sql.split("CREATE SCHEMA").size - 1
@@ -171,8 +153,6 @@ class OplogToSQLParserTests {
 
     @Test
     fun `should generate schema table once and two insert statements`() {
-        val parser = OplogToSQLParser()
-
         val sql = parser.toSQL(inputMultipleJson())
 
         val expected = """
