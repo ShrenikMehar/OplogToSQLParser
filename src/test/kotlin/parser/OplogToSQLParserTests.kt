@@ -12,6 +12,12 @@ class OplogToSQLParserTests {
             .readText()
     }
 
+    private fun inputMultipleJson(): String {
+        return javaClass
+            .getResource("/oplog-insert-multiple.json")!!
+            .readText()
+    }
+
     private fun updateJsonForNewValue(): String {
         return javaClass
             .getResource("/oplog-update-set.json")!!
@@ -139,5 +145,14 @@ class OplogToSQLParserTests {
     """.trimIndent()
 
         assertEquals(expected, sql)
+    }
+
+    @Test
+    fun `should handle multiple input oplog entries`() {
+        val parser = OplogToSQLParser()
+
+        val sql = parser.toSQL(inputMultipleJson())
+
+        assertTrue(sql.isNotBlank())
     }
 }
