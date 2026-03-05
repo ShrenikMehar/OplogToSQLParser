@@ -6,6 +6,7 @@ class OplogToSQLParser {
     private val jsonAccessor = OplogJsonAccessor()
     private val sqlUtils = SqlUtils()
     private val updateBuilder = UpdateSQLBuilder(jsonAccessor, sqlUtils)
+    private val deleteBuilder = DeleteSQLBuilder(jsonAccessor)
 
     fun toSQL(jsonString: String): String {
         val jsonNode = jsonParser.parse(jsonString)
@@ -13,7 +14,7 @@ class OplogToSQLParser {
         return when (jsonAccessor.getOpType(jsonNode)) {
             OpType.INSERT -> toInsertStatements(jsonNode)
             OpType.UPDATE -> updateBuilder.build(jsonNode)
-            OpType.DELETE -> toDeleteSQL(jsonNode)
+            OpType.DELETE -> deleteBuilder.build(jsonNode)
         }
     }
 
@@ -33,13 +34,6 @@ class OplogToSQLParser {
         val values = columns.map { sqlUtils.formatValue(objectNode.get(it)) }
 
         return "INSERT INTO $table (${columns.joinToString()}) VALUES (${values.joinToString()});"
-    }
-
-    private fun toDeleteSQL(jsonNode: JsonNode): String {
-        val table = jsonAccessor.getNamespace(jsonNode)
-        val id = jsonAccessor.getObjectNode(jsonNode).get("_id").asText()
-
-        return "DELETE FROM $table WHERE _id = '$id';"
     }
 
     private fun buildCreateSchema(node: JsonNode): String {
