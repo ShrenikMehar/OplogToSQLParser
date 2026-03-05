@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "2.3.0"
+    application
 }
 
 group = "one2n.parser"
@@ -9,6 +10,10 @@ repositories {
     mavenCentral()
 }
 
+application {
+    mainClass.set("MainKt")
+}
+
 dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.6")
     testImplementation(kotlin("test"))
@@ -16,4 +21,12 @@ dependencies {
 
 kotlin {
     jvmToolchain(25)
+}
+
+tasks.jar {
+    archiveFileName.set("app.jar")
+
+    manifest {
+        attributes["Main-Class"] = "MainKt"
+    }
 }
