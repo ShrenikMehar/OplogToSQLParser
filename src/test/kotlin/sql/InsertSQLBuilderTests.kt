@@ -20,6 +20,18 @@ class InsertSQLBuilderTests {
     }
 
     @Test
+    fun `should generate only insert statement`() {
+        val node = parser.parse(inputJson())
+
+        val sql = builder.buildInsert(node)
+
+        val expected =
+            "INSERT INTO test.student (_id, name, roll_no, is_graduated, date_of_birth) VALUES ('635b79e231d82a8ab1de863b', 'Selena Miller', 51, false, '2000-01-30');"
+
+        assertEquals(expected, sql)
+    }
+
+    @Test
     fun `should generate create schema create table and insert sql`() {
         val node = parser.parse(inputJson())
 

@@ -35,6 +35,27 @@ class OplogToSQLParser {
         }
 
     private fun processMultiple(jsonArrayNode: JsonNode): String {
-        return jsonArrayNode.joinToString("\n\n") { processSingle(it) }
+        val results = mutableListOf<String>()
+        val seen = mutableSetOf<String>()
+
+        jsonArrayNode.forEach { oplog ->
+
+            val namespace = jsonAccessor.getNamespace(oplog)
+
+            if (jsonAccessor.getOpType(oplog) == OpType.INSERT) {
+
+                if (namespace !in seen) {
+                    results.add(insertBuilder.build(oplog))
+                    seen.add(namespace)
+                } else {
+                    results.add(insertBuilder.buildInsert(oplog))
+                }
+
+            } else {
+                results.add(processSingle(oplog))
+            }
+        }
+
+        return results.joinToString("\n\n")
     }
 }

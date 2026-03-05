@@ -155,4 +155,36 @@ class OplogToSQLParserTests {
 
         assertTrue(sql.isNotBlank())
     }
+
+    @Test
+    fun `should create schema and table only once for same collection`() {
+        val parser = OplogToSQLParser()
+
+        val sql = parser.toSQL(inputMultipleJson())
+
+        val schemaCount = sql.split("CREATE SCHEMA").size - 1
+        val tableCount = sql.split("CREATE TABLE").size - 1
+
+        assertEquals(1, schemaCount)
+        assertEquals(1, tableCount)
+    }
+
+    @Test
+    fun `should generate schema table once and two insert statements`() {
+        val parser = OplogToSQLParser()
+
+        val sql = parser.toSQL(inputMultipleJson())
+
+        val expected = """
+        CREATE SCHEMA test;
+
+        CREATE TABLE test.student (_id VARCHAR(255) PRIMARY KEY, name VARCHAR(255), roll_no FLOAT, is_graduated BOOLEAN, date_of_birth VARCHAR(255));
+
+        INSERT INTO test.student (_id, name, roll_no, is_graduated, date_of_birth) VALUES ('635b79e231d82a8ab1de863b', 'Selena Miller', 51, false, '2000-01-30');
+
+        INSERT INTO test.student (_id, name, roll_no, is_graduated, date_of_birth) VALUES ('14798c213f273a7ca2cf5174', 'George Smith', 21, true, '2001-03-23');
+    """.trimIndent()
+
+        assertEquals(expected, sql)
+    }
 }

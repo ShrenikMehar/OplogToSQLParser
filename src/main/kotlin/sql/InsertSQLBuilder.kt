@@ -31,7 +31,7 @@ class InsertSQLBuilder(
         return "CREATE TABLE $namespace ($columns);"
     }
 
-    private fun buildInsert(node: JsonNode): String {
+    fun buildInsert(node: JsonNode): String {
         val table = accessor.getNamespace(node)
         val objectNode = accessor.getObjectNode(node)
 
