@@ -34,28 +34,14 @@ class OplogToSQLParser {
             OpType.DELETE -> deleteBuilder.build(jsonNode)
         }
 
-    private fun processMultiple(jsonArrayNode: JsonNode): String {
-        val results = mutableListOf<String>()
-        val seen = mutableSetOf<String>()
+    private fun processMultiple(arrayNode: JsonNode): String {
+        val nodes = arrayNode.toList()
+        val first = nodes.first()
 
-        jsonArrayNode.forEach { oplog ->
+        val schemaTableAndFirstInsert = insertBuilder.build(first)
+        val otherInserts = nodes.drop(1).map { insertBuilder.buildInsert(it) }
 
-            val namespace = jsonAccessor.getNamespace(oplog)
-
-            if (jsonAccessor.getOpType(oplog) == OpType.INSERT) {
-
-                if (namespace !in seen) {
-                    results.add(insertBuilder.build(oplog))
-                    seen.add(namespace)
-                } else {
-                    results.add(insertBuilder.buildInsert(oplog))
-                }
-
-            } else {
-                results.add(processSingle(oplog))
-            }
-        }
-
-        return results.joinToString("\n\n")
+        return listOf(schemaTableAndFirstInsert, *otherInserts.toTypedArray())
+            .joinToString("\n\n")
     }
 }
