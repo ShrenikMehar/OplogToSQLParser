@@ -4,6 +4,7 @@ class OplogToSQLParser {
 
     private val jsonParser = OplogJsonParser()
     private val jsonAccessor = OplogJsonAccessor()
+    private val sqlUtils = SqlUtils()
 
     fun toSQL(jsonString: String): String {
         val jsonNode = jsonParser.parse(jsonString)
@@ -28,7 +29,7 @@ class OplogToSQLParser {
         val objectNode = jsonAccessor.getObjectNode(jsonNode)
 
         val columns = getColumns(objectNode)
-        val values = columns.map { formatValue(objectNode.get(it)) }
+        val values = columns.map { sqlUtils.formatValue(objectNode.get(it)) }
 
         return "INSERT INTO $table (${columns.joinToString()}) VALUES (${values.joinToString()});"
     }
@@ -75,7 +76,7 @@ class OplogToSQLParser {
 
         diff.get("u")?.let { updates ->
             val column = updates.fieldNames().next()
-            val value = formatValue(updates.get(column))
+            val value = sqlUtils.formatValue(updates.get(column))
             return "$column = $value"
         }
 
@@ -89,14 +90,6 @@ class OplogToSQLParser {
 
     private fun getColumns(objectNode: JsonNode): List<String> =
         objectNode.fieldNames().asSequence().toList()
-
-    private fun formatValue(value: JsonNode): String =
-        when {
-            value.isTextual -> "'${value.asText()}'"
-            value.isBoolean -> value.asBoolean().toString()
-            value.isNumber  -> value.numberValue().toString()
-            else -> value.toString()
-        }
 
     private fun inferSqlType(value: JsonNode): String = when {
         value.isTextual -> "VARCHAR(255)"
