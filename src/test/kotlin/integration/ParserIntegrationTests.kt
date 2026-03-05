@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import parser.OplogToSQLParser
 
-class ParserIntegrationTest : BasePostgresTest() {
+class ParserIntegrationTests : BasePostgresTest() {
 
     private fun inputJson(): String =
         javaClass.getResource("/oplog-insert-multiple.json")!!.readText()

@@ -1,22 +1,12 @@
+package integration
+
 import org.junit.jupiter.api.Test
-import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.sql.DriverManager
 import kotlin.test.assertEquals
 
 @Testcontainers
-class PostgresConnectionTest {
-
-    companion object {
-
-        @Container
-        @JvmStatic
-        val postgres = PostgreSQLContainer("postgres:16-alpine")
-            .withDatabaseName("testdb")
-            .withUsername("test")
-            .withPassword("test")
-    }
+class PostgresConnectionTest: BasePostgresTest() {
 
     @Test
     fun `should connect to postgres`() {
