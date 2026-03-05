@@ -3,11 +3,12 @@ import com.fasterxml.jackson.databind.JsonNode
 class OplogToSQLParser {
 
     private val jsonParser = OplogJsonParser()
+    private val jsonAccessor = OplogJsonAccessor()
 
     fun toSQL(jsonString: String): String {
         val jsonNode = jsonParser.parse(jsonString)
 
-        return when (getOpType(jsonNode)) {
+        return when (jsonAccessor.getOpType(jsonNode)) {
             OpType.INSERT -> toInsertStatements(jsonNode)
             OpType.UPDATE -> toUpdateSQL(jsonNode)
             OpType.DELETE -> toDeleteSQL(jsonNode)
@@ -23,8 +24,8 @@ class OplogToSQLParser {
     }
 
     private fun toInsertSQL(jsonNode: JsonNode): String {
-        val table = getNamespace(jsonNode)
-        val objectNode = getObjectNode(jsonNode)
+        val table = jsonAccessor.getNamespace(jsonNode)
+        val objectNode = jsonAccessor.getObjectNode(jsonNode)
 
         val columns = getColumns(objectNode)
         val values = columns.map { formatValue(objectNode.get(it)) }
@@ -33,28 +34,28 @@ class OplogToSQLParser {
     }
 
     private fun toUpdateSQL(jsonNode: JsonNode): String {
-        val table = getNamespace(jsonNode)
+        val table = jsonAccessor.getNamespace(jsonNode)
         val setClause = buildSetClause(jsonNode)
-        val id = getId(jsonNode)
+        val id = jsonAccessor.getId(jsonNode)
 
         return "UPDATE $table SET $setClause WHERE _id = '$id';"
     }
 
     private fun toDeleteSQL(jsonNode: JsonNode): String {
-        val table = getNamespace(jsonNode)
-        val id = getObjectNode(jsonNode).get("_id").asText()
+        val table = jsonAccessor.getNamespace(jsonNode)
+        val id = jsonAccessor.getObjectNode(jsonNode).get("_id").asText()
 
         return "DELETE FROM $table WHERE _id = '$id';"
     }
 
     private fun buildCreateSchema(node: JsonNode): String {
-        val schema = getSchema(node)
+        val schema = jsonAccessor.getSchema(node)
         return "CREATE SCHEMA $schema;"
     }
 
     private fun buildCreateTable(node: JsonNode): String {
-        val namespace = getNamespace(node)
-        val objectNode = getObjectNode(node)
+        val namespace = jsonAccessor.getNamespace(node)
+        val objectNode = jsonAccessor.getObjectNode(node)
 
         val columns = getColumns(objectNode).joinToString(", ") {
             buildColumnDefinition(it, objectNode.get(it))
@@ -69,7 +70,7 @@ class OplogToSQLParser {
     }
 
     private fun buildSetClause(jsonNode: JsonNode): String {
-        val objectNode = getObjectNode(jsonNode)
+        val objectNode = jsonAccessor.getObjectNode(jsonNode)
         val diff = objectNode.get("diff")
 
         diff.get("u")?.let { updates ->
@@ -103,27 +104,4 @@ class OplogToSQLParser {
         value.isNumber -> "FLOAT"
         else -> "VARCHAR(255)"
     }
-
-    private fun getOpType(jsonNode: JsonNode): OpType =
-        when (jsonNode.get("op")?.asText()) {
-            "i" -> OpType.INSERT
-            "u" -> OpType.UPDATE
-            "d" -> OpType.DELETE
-            else -> throw IllegalArgumentException("Operation Type is not supported")
-        }
-
-    private fun getNamespace(jsonNode: JsonNode): String =
-        jsonNode.get("ns").asText()
-
-    private fun getSchema(node: JsonNode): String =
-        getNamespace(node).substringBefore(".")
-
-    private fun getTable(node: JsonNode): String =
-        getNamespace(node).substringAfter(".")
-
-    private fun getObjectNode(jsonNode: JsonNode): JsonNode =
-        jsonNode.get("o")
-
-    private fun getId(jsonNode: JsonNode): String =
-        jsonNode.get("o2").get("_id").asText()
 }
