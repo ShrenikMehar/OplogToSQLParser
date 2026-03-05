@@ -16,11 +16,19 @@ application {
 
 dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.6")
+    testImplementation("org.testcontainers:testcontainers:1.21.4")
+    testImplementation("org.testcontainers:postgresql:1.21.4")
+    testImplementation("org.testcontainers:junit-jupiter:1.21.4")
+    testImplementation("org.postgresql:postgresql:42.7.10")
     testImplementation(kotlin("test"))
 }
 
 kotlin {
     jvmToolchain(25)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.jar {
