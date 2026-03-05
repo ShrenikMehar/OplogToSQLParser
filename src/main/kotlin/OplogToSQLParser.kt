@@ -9,10 +9,18 @@ class OplogToSQLParser {
         val jsonNode = stringToJsonNode(jsonString)
 
         return when (getOpType(jsonNode)) {
-            OpType.INSERT -> toInsertSQL(jsonNode)
+            OpType.INSERT -> toInsertStatements(jsonNode)
             OpType.UPDATE -> toUpdateSQL(jsonNode)
             OpType.DELETE -> toDeleteSQL(jsonNode)
         }
+    }
+
+    private fun toInsertStatements(node: JsonNode): String {
+        val schemaSql = buildCreateSchema(node)
+        val insertSql = toInsertSQL(node)
+
+        return listOf(schemaSql, insertSql)
+            .joinToString("\n\n")
     }
 
     private fun toInsertSQL(jsonNode: JsonNode): String {
@@ -38,6 +46,11 @@ class OplogToSQLParser {
         val id = getObjectNode(jsonNode).get("_id").asText()
 
         return "DELETE FROM $table WHERE _id = '$id';"
+    }
+
+    private fun buildCreateSchema(node: JsonNode): String {
+        val schema = getSchema(node)
+        return "CREATE SCHEMA $schema;"
     }
 
     private fun buildSetClause(jsonNode: JsonNode): String {
@@ -75,6 +88,9 @@ class OplogToSQLParser {
 
     private fun getNamespace(jsonNode: JsonNode): String =
         jsonNode.get("ns").asText()
+
+    private fun getSchema(node: JsonNode): String =
+        getNamespace(node).split(".")[0]
 
     private fun getObjectNode(jsonNode: JsonNode): JsonNode =
         jsonNode.get("o")

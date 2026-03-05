@@ -1,6 +1,7 @@
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class OplogToSQLParserTests {
     private fun inputJson(): String {
@@ -33,10 +34,11 @@ class OplogToSQLParserTests {
 
         val sql = parser.toSQL(inputJson())
 
-        assertEquals(
-            "INSERT INTO test.student (_id, name, roll_no, is_graduated, date_of_birth) " +
-                    "VALUES ('635b79e231d82a8ab1de863b', 'Selena Miller', 51, false, '2000-01-30');",
-            sql
+        assertTrue(
+            sql.contains(
+                "INSERT INTO test.student (_id, name, roll_no, is_graduated, date_of_birth) " +
+                        "VALUES ('635b79e231d82a8ab1de863b', 'Selena Miller', 51, false, '2000-01-30');"
+            )
         )
     }
 
@@ -96,5 +98,14 @@ class OplogToSQLParserTests {
             "DELETE FROM test.student WHERE _id = '635b79e231d82a8ab1de863b';",
             sql
         )
+    }
+
+    @Test
+    fun `should generate create schema statement`() {
+        val parser = OplogToSQLParser()
+
+        val sql = parser.toSQL(inputJson())
+
+        assertTrue(sql.contains("CREATE SCHEMA test;"))
     }
 }
