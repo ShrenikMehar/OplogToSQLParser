@@ -19,6 +19,9 @@ class OplogJsonAccessor {
     fun getTable(node: JsonNode): String =
         getNamespace(node).substringAfter(".")
 
+    fun getColumns(objectNode: JsonNode): List<String> =
+        objectNode.fieldNames().asSequence().toList()
+
     fun getObjectNode(node: JsonNode): JsonNode =
         node.get("o")
 

@@ -28,7 +28,7 @@ class OplogToSQLParser {
         val table = jsonAccessor.getNamespace(jsonNode)
         val objectNode = jsonAccessor.getObjectNode(jsonNode)
 
-        val columns = getColumns(objectNode)
+        val columns = jsonAccessor.getColumns(objectNode)
         val values = columns.map { sqlUtils.formatValue(objectNode.get(it)) }
 
         return "INSERT INTO $table (${columns.joinToString()}) VALUES (${values.joinToString()});"
@@ -58,7 +58,7 @@ class OplogToSQLParser {
         val namespace = jsonAccessor.getNamespace(node)
         val objectNode = jsonAccessor.getObjectNode(node)
 
-        val columns = getColumns(objectNode).joinToString(", ") {
+        val columns = jsonAccessor.getColumns(objectNode).joinToString(", ") {
             buildColumnDefinition(it, objectNode.get(it))
         }
 
@@ -87,9 +87,6 @@ class OplogToSQLParser {
 
         throw IllegalArgumentException("Unsupported update operation")
     }
-
-    private fun getColumns(objectNode: JsonNode): List<String> =
-        objectNode.fieldNames().asSequence().toList()
 
     private fun inferSqlType(value: JsonNode): String = when {
         value.isTextual -> "VARCHAR(255)"

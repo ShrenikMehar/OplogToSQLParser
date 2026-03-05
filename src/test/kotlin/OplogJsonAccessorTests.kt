@@ -46,6 +46,14 @@ class OplogJsonAccessorTests {
     }
 
     @Test
+    fun `should extract columns from object node`() {
+        val objectNode = accessor.getObjectNode(node)
+        val columns = accessor.getColumns(objectNode)
+
+        assertEquals(listOf("_id", "name"), columns)
+    }
+
+    @Test
     fun `should extract object node`() {
         val objectNode = accessor.getObjectNode(node)
         assertEquals("Selena", objectNode.get("name").asText())
