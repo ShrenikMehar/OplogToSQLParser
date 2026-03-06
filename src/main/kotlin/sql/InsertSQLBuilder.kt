@@ -18,7 +18,7 @@ class InsertSQLBuilder(
 
     private fun buildCreateSchema(node: JsonNode): String {
         val schema = accessor.getSchema(node)
-        return "CREATE SCHEMA $schema;"
+        return "CREATE SCHEMA IF NOT EXISTS $schema;"
     }
 
     private fun buildCreateTable(node: JsonNode): String {
@@ -28,7 +28,7 @@ class InsertSQLBuilder(
         val columns = accessor.getColumns(objectNode)
             .joinToString(", ") { buildColumnDefinition(it, objectNode.get(it)) }
 
-        return "CREATE TABLE $namespace ($columns);"
+        return "CREATE TABLE IF NOT EXISTS $namespace ($columns);"
     }
 
     fun buildInsert(node: JsonNode): String {
