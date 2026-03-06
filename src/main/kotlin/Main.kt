@@ -1,3 +1,4 @@
+import parser.OplogToSQLParser
 import java.sql.DriverManager
 
 fun main() {
@@ -7,23 +8,38 @@ fun main() {
     val user = "postgres"
     val password = "postgres"
 
+    var connection: java.sql.Connection? = null
+
     repeat(10) { attempt ->
         try {
-            val conn = DriverManager.getConnection(url, user, password)
-            val stmt = conn.createStatement()
-            val rs = stmt.executeQuery("SELECT 1")
-
-            while (rs.next()) {
-                println("DB result: ${rs.getInt(1)}")
-            }
-
-            conn.close()
-            return
+            connection = DriverManager.getConnection(url, user, password)
+            println("Connected to Postgres!")
+            return@repeat
         } catch (e: Exception) {
             println("Attempt ${attempt + 1}: Postgres not ready yet...")
             Thread.sleep(2000)
         }
     }
 
-    println("Failed to connect to Postgres.")
+    if (connection == null) {
+        println("Failed to connect to Postgres.")
+        return
+    }
+
+    val parser = OplogToSQLParser()
+
+    val json = object {}.javaClass
+        .getResource("/sample-oplog.json")!!
+        .readText()
+
+    val sql = parser.toSQL(json)
+
+    println("Generated SQL:")
+    println(sql)
+
+    connection!!.createStatement().execute(sql)
+
+    println("SQL executed successfully")
+
+    connection!!.close()
 }
