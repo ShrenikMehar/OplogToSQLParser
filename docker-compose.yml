@@ -1,4 +1,15 @@
 services:
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: oplogdb
+    ports:
+      - "5432:5432"
+
   oplog-parser:
     build: .
     container_name: oplog-parser
