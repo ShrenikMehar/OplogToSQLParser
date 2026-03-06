@@ -17,6 +17,7 @@ application {
 
 dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.6")
+    implementation("org.apache.kafka:kafka-clients:4.2.0")
     implementation("org.postgresql:postgresql:42.7.10")
 
     testImplementation("org.testcontainers:testcontainers:1.21.4")

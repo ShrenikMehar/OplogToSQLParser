@@ -1,5 +1,9 @@
 import parser.OplogToSQLParser
+import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.consumer.ConsumerRecords
 import java.sql.DriverManager
+import java.time.Duration
+import java.util.Properties
 
 fun main() {
     println("Connecting to Postgres...")
@@ -26,20 +30,45 @@ fun main() {
         return
     }
 
+    println("Connecting to Kafka...")
+
+    val props = Properties().apply {
+        put("bootstrap.servers", "kafka:29092")
+        put("group.id", "oplog-parser-group")
+        put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
+        put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
+        put("auto.offset.reset", "earliest")
+    }
+
+    val consumer = KafkaConsumer<String, String>(props)
+    consumer.subscribe(listOf("oplog-events"))
+
+    println("Kafka consumer started. Waiting for messages...")
+
     val parser = OplogToSQLParser()
 
-    val json = object {}.javaClass
-        .getResource("/sample-oplog.json")!!
-        .readText()
+    while (true) {
+        val records: ConsumerRecords<String, String> = consumer.poll(Duration.ofMillis(100))
 
-    val sql = parser.toSQL(json)
+        for (record in records) {
+            try {
+                val json = record.value()
 
-    println("Generated SQL:")
-    println(sql)
+                println("Received message from Kafka:")
+                println(json)
 
-    connection!!.createStatement().execute(sql)
+                val sql = parser.toSQL(json)
 
-    println("SQL executed successfully")
+                println("Generated SQL:")
+                println(sql)
 
-    connection!!.close()
+                connection!!.createStatement().execute(sql)
+
+                println("SQL executed successfully")
+
+            } catch (e: Exception) {
+                println("Error processing message: ${e.message}")
+            }
+        }
+    }
 }
