@@ -1,6 +1,6 @@
-package json
+package parser.json
 
-import model.OpType
+import parser.model.OpType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

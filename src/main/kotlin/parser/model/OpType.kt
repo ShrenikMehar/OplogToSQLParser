@@ -1,4 +1,4 @@
-package model
+package parser.model
 
 enum class OpType {
     INSERT,

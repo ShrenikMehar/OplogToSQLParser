@@ -1,7 +1,7 @@
-package json
+package parser.json
 
 import com.fasterxml.jackson.databind.JsonNode
-import model.OpType
+import parser.model.OpType
 
 class OplogJsonAccessor {
 

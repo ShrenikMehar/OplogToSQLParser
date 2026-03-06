@@ -1,13 +1,13 @@
 package parser
 
 import com.fasterxml.jackson.databind.JsonNode
-import sql.DeleteSQLBuilder
-import sql.InsertSQLBuilder
-import json.OplogJsonAccessor
-import json.OplogJsonParser
-import model.OpType
-import sql.SqlUtils
-import sql.UpdateSQLBuilder
+import parser.json.OplogJsonAccessor
+import parser.json.OplogJsonParser
+import parser.model.OpType
+import parser.sql.DeleteSQLBuilder
+import parser.sql.InsertSQLBuilder
+import parser.sql.SqlUtils
+import parser.sql.UpdateSQLBuilder
 
 class OplogToSQLParser {
 

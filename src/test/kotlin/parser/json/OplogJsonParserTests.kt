@@ -1,4 +1,4 @@
-package json
+package parser.json
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

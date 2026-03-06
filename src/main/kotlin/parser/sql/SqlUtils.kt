@@ -1,4 +1,4 @@
-package sql
+package parser.sql
 
 import com.fasterxml.jackson.databind.JsonNode
 
