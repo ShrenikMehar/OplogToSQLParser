@@ -6,11 +6,16 @@ import java.time.Duration
 import java.util.Properties
 
 fun main() {
+
+    val config = Properties()
+    val configStream = object {}.javaClass.getResourceAsStream("/application.properties")
+    config.load(configStream)
+
     println("Connecting to Postgres...")
 
-    val url = "jdbc:postgresql://postgres:5432/oplogdb"
-    val user = "postgres"
-    val password = "postgres"
+    val url = config.getProperty("postgres.url")
+    val user = config.getProperty("postgres.user")
+    val password = config.getProperty("postgres.password")
 
     var connection: java.sql.Connection? = null
 
@@ -32,16 +37,16 @@ fun main() {
 
     println("Connecting to Kafka...")
 
-    val props = Properties().apply {
-        put("bootstrap.servers", "kafka:29092")
-        put("group.id", "oplog-parser-group")
+    val kafkaProps = Properties().apply {
+        put("bootstrap.servers", config.getProperty("kafka.bootstrapServers"))
+        put("group.id", config.getProperty("kafka.groupId"))
         put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
         put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
         put("auto.offset.reset", "earliest")
     }
 
-    val consumer = KafkaConsumer<String, String>(props)
-    consumer.subscribe(listOf("oplog-events"))
+    val consumer = KafkaConsumer<String, String>(kafkaProps)
+    consumer.subscribe(listOf(config.getProperty("kafka.topic")))
 
     println("Kafka consumer started. Waiting for messages...")
 
@@ -62,7 +67,7 @@ fun main() {
                 println("Generated SQL:")
                 println(sql)
 
-                connection!!.createStatement().execute(sql)
+                connection.createStatement().execute(sql)
 
                 println("SQL executed successfully")
 
