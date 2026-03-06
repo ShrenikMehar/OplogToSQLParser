@@ -2,6 +2,6 @@ FROM eclipse-temurin:25-jre
 
 WORKDIR /app
 
-COPY build/libs/app.jar app.jar
+COPY build/libs/*-all.jar app.jar
 
 CMD ["java", "-jar", "app.jar"]
