@@ -92,7 +92,7 @@ class OplogToSQLParserTests {
     }
 
     @Test
-    fun `should generate update sql when deleting an entry`() {
+    fun `should generate delete sql when deleting an entry`() {
         val sql = parser.toSQL(deleteJson())
 
         assertEquals(
