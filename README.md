@@ -2,34 +2,41 @@
 
 Small Kotlin project that converts MongoDB oplog JSON entries into equivalent SQL statements and executes them on PostgreSQL.
 
-Right now the project runs inside Docker and demonstrates a simple pipeline:
+The project runs fully inside Docker and demonstrates a simple streaming pipeline:
 
-```id="pipe1"
-sample-oplog.json → parser → SQL → PostgreSQL
+```
+Kafka Producer → oplog-events topic → parser → SQL → PostgreSQL
 ```
 
-The goal is to simulate how MongoDB operations could be translated and applied to a relational database.
+Messages sent to the Kafka topic are parsed by the Kotlin service, converted to SQL, and applied to Postgres.
+
+The goal is to simulate how MongoDB oplog events could be translated and replayed in a relational database.
 
 ---
 
-## Sample Input
+## Input Format
 
-The input oplog JSON is stored in:
+The parser expects MongoDB oplog-style JSON messages.
 
+Example insert event:
+
+```json
+{"op":"i","ns":"test.student","o":{"_id":"635b79e231d82a8ab1de863b","name":"Selena Miller","roll_no":51,"is_graduated":false,"date_of_birth":"2000-01-30"}}
 ```
-src/main/resources/sample-oplog.json
+
+Example update event:
+
+```json
+{"op":"u","ns":"test.student","o":{"$v":2,"diff":{"u":{"is_graduated":true}}},"o2":{"_id":"635b79e231d82a8ab1de863b"}}
 ```
 
-The application reads this file at runtime and generates SQL from it.
+Example delete event:
 
-You can modify this file to test different operations like:
+```json
+{"op":"d","ns":"test.student","o":{"_id":"635b79e231d82a8ab1de863b"}}
+```
 
-* insert
-* update
-* delete
-* multiple oplog entries
-
-After modifying the file, rebuild and run again.
+Multiple events can also be sent as a JSON array.
 
 ---
 
@@ -37,29 +44,60 @@ After modifying the file, rebuild and run again.
 
 Build the fat jar:
 
-```id="run1"
+```bash
 ./gradlew shadowJar
 ```
 
-Start the containers:
+Build Docker images:
 
-```id="run2"
+```bash
+docker-compose build
+```
+
+Start the system:
+
+```bash
 docker-compose up
 ```
 
 You should see logs like:
 
-```id="run3"
+```
 Connecting to Postgres...
 Connected to Postgres!
-
-Generated SQL:
-CREATE SCHEMA test;
-CREATE TABLE test.student ...
-INSERT INTO test.student ...
-
-SQL executed successfully
+Connecting to Kafka...
+Kafka consumer started. Waiting for messages...
 ```
+
+---
+
+## Sending Oplog Events
+
+Open a shell in the Kafka container:
+
+```bash
+docker exec -it kafka bash
+```
+
+Start the producer:
+
+```bash
+/opt/kafka/bin/kafka-console-producer.sh \
+  --topic oplog-events \
+  --bootstrap-server localhost:9092
+```
+
+Now paste a JSON message like:
+
+```json
+{"op":"i","ns":"test.student","o":{"_id":"100","name":"Alice","roll_no":45}}
+```
+
+The parser will:
+
+1. Read the message from Kafka
+2. Convert it to SQL
+3. Execute it in PostgreSQL
 
 ---
 
@@ -67,15 +105,17 @@ SQL executed successfully
 
 Open a shell inside the Postgres container:
 
-```id="verify1"
+```bash
 docker exec -it postgres psql -U postgres -d oplogdb
 ```
 
 Run:
 
-```id="verify2"
+```sql
 SELECT * FROM test.student;
 ```
+
+You should see the inserted/updated rows.
 
 ---
 
@@ -83,13 +123,13 @@ SELECT * FROM test.student;
 
 Start containers:
 
-```id="cmd1"
+```bash
 docker-compose up
 ```
 
-Rebuild after code or input change:
+Rebuild after code changes:
 
-```id="cmd2"
+```bash
 ./gradlew shadowJar
 docker-compose build
 docker-compose up
@@ -97,13 +137,19 @@ docker-compose up
 
 Stop containers:
 
-```id="cmd3"
+```bash
 docker-compose down
+```
+
+View parser logs:
+
+```bash
+docker-compose logs -f oplog-parser
 ```
 
 List running containers:
 
-```id="cmd4"
+```bash
 docker ps
 ```
 
@@ -111,7 +157,30 @@ docker ps
 
 ## Current Setup
 
-* Kotlin parser converts oplog JSON → SQL
-* PostgreSQL runs in Docker
-* Parser container connects to Postgres using JDBC
-* Sample oplog JSON is read from `resources`
+The system currently includes:
+
+- Kotlin parser service
+- Apache Kafka (single node)
+- PostgreSQL
+- Docker Compose environment
+
+Flow:
+
+```
+Kafka producer
+      ↓
+Kafka topic (oplog-events)
+      ↓
+OplogToSQLParser (consumer)
+      ↓
+Generated SQL
+      ↓
+PostgreSQL
+```
+
+Supported operations so far:
+
+- insert
+- update
+- delete
+- multiple oplog entries in a single message
