@@ -1,54 +1,54 @@
-# OplogToSQLParser
+## OplogToSQLParser
 
-Small Kotlin project that converts MongoDB oplog JSON entries into equivalent SQL statements and executes them on PostgreSQL.
+Small Kotlin project that converts MongoDB oplog-style events into equivalent SQL statements and executes them on PostgreSQL.
 
-The project runs fully inside Docker and demonstrates a simple streaming pipeline:
+The project runs fully inside Docker and demonstrates a simple streaming CDC pipeline:
 
 ```
-Kafka Producer → oplog-events topic → parser → SQL → PostgreSQL
+MongoDB → Debezium → Kafka → Parser → PostgreSQL
 ```
 
-Messages sent to the Kafka topic are parsed by the Kotlin service, converted to SQL, and applied to Postgres.
+Changes in MongoDB collections are captured via the oplog, streamed through Kafka using Debezium, transformed into SQL by the Kotlin parser, and applied to PostgreSQL.
 
-The goal is to simulate how MongoDB oplog events could be translated and replayed in a relational database.
+The goal is to simulate how MongoDB operations can be replayed in a relational database.
 
 ---
 
-## Input Format
+## Architecture
 
-The parser expects MongoDB oplog-style JSON messages.
-
-Example insert event:
-
-```json
-{"op":"i","ns":"test.student","o":{"_id":"635b79e231d82a8ab1de863b","name":"Selena Miller","roll_no":51,"is_graduated":false,"date_of_birth":"2000-01-30"}}
+```
+MongoDB
+   ↓
+Mongo Oplog
+   ↓
+Debezium (Kafka Connect)
+   ↓
+Kafka Topic (mongo.<db>.<collection>)
+   ↓
+OplogToSQLParser (Kafka Consumer)
+   ↓
+Generated SQL
+   ↓
+PostgreSQL
 ```
 
-Example update event:
+Example Kafka topic produced by Debezium:
 
-```json
-{"op":"u","ns":"test.student","o":{"$v":2,"diff":{"u":{"is_graduated":true}}},"o2":{"_id":"635b79e231d82a8ab1de863b"}}
 ```
-
-Example delete event:
-
-```json
-{"op":"d","ns":"test.student","o":{"_id":"635b79e231d82a8ab1de863b"}}
+mongo.test.student
 ```
-
-Multiple events can also be sent as a JSON array.
 
 ---
 
 ## How to Run
 
-Build the fat jar:
+Build the jar:
 
 ```bash
 ./gradlew shadowJar
 ```
 
-Build Docker images:
+Build docker images:
 
 ```bash
 docker-compose build
@@ -71,39 +71,131 @@ Kafka consumer started. Waiting for messages...
 
 ---
 
-## Sending Oplog Events
+## Initialize Mongo Replica Set
 
-Open a shell in the Kafka container:
+MongoDB oplog works only with replica sets.
 
-```bash
-docker exec -it kafka bash
-```
-
-Start the producer:
+Open a Mongo shell:
 
 ```bash
-/opt/kafka/bin/kafka-console-producer.sh \
-  --topic oplog-events \
-  --bootstrap-server localhost:9092
+docker exec -it mongo mongosh
 ```
 
-Now paste a JSON message like:
+Run:
 
-```json
-{"op":"i","ns":"test.student","o":{"_id":"100","name":"Alice","roll_no":45}}
+```javascript
+rs.initiate({
+  _id: "rs0",
+  members: [
+    { _id: 0, host: "mongo:27017" }
+  ]
+})
 ```
 
-The parser will:
+Verify:
 
-1. Read the message from Kafka
-2. Convert it to SQL
-3. Execute it in PostgreSQL
+```javascript
+rs.status()
+```
+
+You should see:
+
+```
+stateStr: "PRIMARY"
+```
+
+---
+
+## Register Debezium Connector
+
+Create the MongoDB connector so Debezium can stream oplog events to Kafka.
+
+Run:
+
+```bash
+curl -X POST http://localhost:8083/connectors \
+-H "Content-Type: application/json" \
+-d '{
+"name": "mongo-oplog-connector",
+"config": {
+"connector.class": "io.debezium.connector.mongodb.MongoDbConnector",
+"mongodb.connection.string": "mongodb://mongo:27017/?replicaSet=rs0",
+"topic.prefix": "mongo",
+"database.exclude.list": "admin,config,local"
+}
+}'
+```
+
+Verify the connector:
+
+```bash
+curl http://localhost:8083/connectors
+```
+
+Expected output:
+
+```
+["mongo-oplog-connector"]
+```
+
+---
+
+## Insert Data in MongoDB
+
+Open Mongo shell:
+
+```bash
+docker exec -it mongo mongosh
+```
+
+Use a database:
+
+```javascript
+use test
+```
+
+Insert a document:
+
+```javascript
+db.student.insertOne({
+  _id: "100",
+  name: "Alice",
+  roll_no: 45
+})
+```
+
+Debezium will produce a Kafka event on topic:
+
+```
+mongo.test.student
+```
+
+The parser will convert it to SQL and execute it in Postgres.
+
+---
+
+## Update Example
+
+```javascript
+db.student.updateOne(
+  { _id: "100" },
+  { $set: { roll_no: 99 } }
+)
+```
+
+---
+
+## Delete Example
+
+```javascript
+db.student.deleteOne({ _id: "100" })
+```
 
 ---
 
 ## Verify Data in Postgres
 
-Open a shell inside the Postgres container:
+Open Postgres shell:
 
 ```bash
 docker exec -it postgres psql -U postgres -d oplogdb
@@ -115,7 +207,7 @@ Run:
 SELECT * FROM test.student;
 ```
 
-You should see the inserted/updated rows.
+You should see the replicated rows.
 
 ---
 
@@ -147,7 +239,7 @@ View parser logs:
 docker-compose logs -f oplog-parser
 ```
 
-List running containers:
+List containers:
 
 ```bash
 docker ps
@@ -159,28 +251,34 @@ docker ps
 
 The system currently includes:
 
+- MongoDB (replica set)
+- Debezium (Kafka Connect)
+- Apache Kafka
 - Kotlin parser service
-- Apache Kafka (single node)
 - PostgreSQL
 - Docker Compose environment
 
 Flow:
 
 ```
-Kafka producer
-      ↓
-Kafka topic (oplog-events)
-      ↓
-OplogToSQLParser (consumer)
-      ↓
+MongoDB
+   ↓
+Oplog
+   ↓
+Debezium
+   ↓
+Kafka topic (mongo.<db>.<collection>)
+   ↓
+OplogToSQLParser
+   ↓
 Generated SQL
-      ↓
+   ↓
 PostgreSQL
 ```
 
-Supported operations so far:
+Supported operations:
 
 - insert
 - update
 - delete
-- multiple oplog entries in a single message
+- multiple oplog entries
