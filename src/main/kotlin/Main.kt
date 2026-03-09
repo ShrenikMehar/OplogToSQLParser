@@ -1,6 +1,7 @@
 import infra.loadConfig
 import infra.connectPostgres
 import infra.createKafkaConsumer
+import infra.DebeziumAdapter
 import parser.OplogToSQLParser
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import java.time.Duration
@@ -14,6 +15,7 @@ fun main() {
     val consumer = createKafkaConsumer(config)
 
     val parser = OplogToSQLParser()
+    val adapter = DebeziumAdapter()
 
     println("Kafka consumer started. Waiting for messages...")
 
@@ -26,12 +28,17 @@ fun main() {
 
             try {
 
-                val json = record.value()
+                val rawEvent = record.value()
 
                 println("Received message from Kafka:")
-                println(json)
+                println(rawEvent)
 
-                val sql = parser.toSQL(json)
+                val normalizedEvent = adapter.normalize(rawEvent)
+
+                println("Normalized oplog event:")
+                println(normalizedEvent)
+
+                val sql = parser.toSQL(normalizedEvent)
 
                 println("Generated SQL:")
                 println(sql)
